@@ -4,12 +4,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,6 +31,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        TextView tv = findViewById(R.id.index);
+        Button bt = findViewById(R.id.code_button);
+        CodeDatabase db = AppDatabaseSingleton.getInstance((getApplicationContext()));
+
+        bt.setOnClickListener(new ButtonClickListener(this, db, tv));
 
         createCodeList();
         buildRecyclerView();
@@ -43,6 +56,57 @@ public class MainActivity extends AppCompatActivity {
 
         TextView code_view2 = findViewById(R.id.text2_activity2);
         code_view2.setText(line2); */
+    }
+
+    private class ButtonClickListener implements View.OnClickListener {
+        private Activity activity;
+        private CodeDatabase db;
+        private TextView tv;
+
+        public ButtonClickListener(Activity activity, CodeDatabase db, TextView tv) {
+            this.activity = activity;
+            this.db = db;
+            this.tv = tv;
+        }
+
+        @Override
+        public void onClick(View view) {
+            new DataStoreAsyncTask(db, activity, tv).execute();
+        }
+    }
+
+    private static class DataStoreAsyncTask extends AsyncTask<Void, Void, Integer> {
+        private WeakReference<Activity> weakActivity;
+        private CodeDatabase db;
+        private TextView textView;
+        private StringBuffer sb;
+
+        public DataStoreAsyncTask(CodeDatabase db, Activity activity, TextView textView) {
+            this.db = db;
+            weakActivity = new WeakReference<>(activity);
+            this.textView = textView;
+        }
+
+        @Override
+        protected Integer doInBackground(Void...params) {
+            CodeDao codeDao = db.codeDao();
+            codeDao.insert(new Code(new Timestamp(System.currentTimeMillis()).toString()));
+
+            sb = new StringBuffer();
+            List<Code> codeList = codeDao.getAll();
+            for(Code cd: codeList) {
+                sb.append(cd.getCode()).append("\n");
+            }
+            return 0;
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            Activity activity = weakActivity.get();
+            if(activity == null){
+                return;
+            }
+            textView.setText((sb.toString()));
+        }
     }
 
     private void buildRecyclerView() {

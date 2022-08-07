@@ -9,7 +9,6 @@ import androidx.room.PrimaryKey;
 public class Code {
     @PrimaryKey(autoGenerate = true)
     public int id;
-
     @ColumnInfo(name = "code")
     private String code;
 
