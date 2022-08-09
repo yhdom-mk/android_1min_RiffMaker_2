@@ -1,5 +1,8 @@
 package com.example.myapp_1min_riffmaker_2;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -8,6 +11,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -128,7 +134,40 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
 
+    @UiThread
+    private void asyncRead() {
+        Handler handler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                if(msg.obj != null) {
+//                    allCode = (List<Code>) msg.obj;
+//                    callback.onReadCodeCompleted(allCode);
+                }
+            }
+          //処理結果受け取る
+//            BackgroundTaskRead backgroundTaskRead = new BackgroundTaskRead(handler, codeDao, codeItems);
+//            excutorService.submit(backgroundTaskRead);
+        };
+    }
+
+    private static class BackgroundTaskRead implements Runnable {
+        private final Handler handler;
+        private CodeDao codeDao;
+        private List<Code> code;
+
+        BackgroundTaskRead(Handler handler, CodeDao codeDao, List<Code> code) {
+            this.handler = handler;
+            this.codeDao = codeDao;
+            this.code = code;
+        }
+
+        @WorkerThread
+        @Override
+        public void run() {
+            codeDao.getAll();
+        }
     }
 
     private void createCodeList() {
