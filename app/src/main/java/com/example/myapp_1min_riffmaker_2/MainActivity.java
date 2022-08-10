@@ -23,6 +23,8 @@ import java.lang.ref.WeakReference;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -148,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
             }
           //処理結果受け取る
 //            BackgroundTaskRead backgroundTaskRead = new BackgroundTaskRead(handler, codeDao, codeItems);
+//            ExecutorService.submit(backgroundTaskRead);
 //            excutorService.submit(backgroundTaskRead);
         };
     }
@@ -167,6 +170,19 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             codeDao.getAll();
+
+            //スレッドプールの作成
+            ExecutorService pool = Executors.newFixedThreadPool(3);
+            try {
+                BackgroundTaskRead backgroundTaskRead = new BackgroundTaskRead(handler, codeDao, code);
+                pool.submit(backgroundTaskRead);
+            } catch(Exception e)
+            {
+                System.out.println("Exception:" + e);
+            }finally
+            {
+                pool.shutdown();
+            }
         }
     }
 
